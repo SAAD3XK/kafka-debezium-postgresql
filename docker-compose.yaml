@@ -70,7 +70,6 @@ services:
   #     OUTPUT_TOPIC: "output_topic_sink"
 
   jupyter:
-    # image: jupyter/pyspark-notebook
     build:
       context: ./src/jupyter_experiment
       dockerfile: Dockerfile
