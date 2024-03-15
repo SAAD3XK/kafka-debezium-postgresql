@@ -6,4 +6,4 @@ RUN pip install requests
 
 COPY connector.py .
 
-CMD ["sh", "-c", "sleep 10 && python connector.py"]
+CMD ["python", "connector.py"]
