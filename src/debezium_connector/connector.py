@@ -11,7 +11,7 @@ DB_HOST=os.environ.get('DATABASE_HOST')
 DB_PORT=os.environ.get('DATABASE_PORT')
 DB_SERVER_NAME=os.environ.get('DATABASE_NAME')
 
-KAFKA_BOOTSTRAP_SERVER_CONS = os.environ.get('DATABASE_NAME')
+KAFKA_BOOTSTRAP_SERVER_CONS = os.environ.get('KAFKA_SERVER')
 
 # comma-separated list of tables to capture data from
 TABLE_NAMES = os.environ.get('TABLE_LIST')
