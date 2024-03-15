@@ -11,14 +11,14 @@ services:
     image: confluentinc/cp-enterprise-kafka:7.6.0
     container_name: kafka
     ports:
-      - 29092:29092
+      - 9092:9092
     depends_on:
       - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT, PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092, PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT, PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092, PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -27,7 +27,7 @@ services:
   debezium:
     image: debezium/connect:2.5
     environment:
-      BOOTSTRAP_SERVERS: kafka:9092
+      BOOTSTRAP_SERVERS: kafka:29092
       GROUP_ID: 1
       CONFIG_STORAGE_TOPIC: connect_configs
       STATUS_STORAGE_TOPIC: connect_statuses
@@ -41,6 +41,12 @@ services:
       - kafka
     ports:
       - 8083:8083
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 1s
+      timeout: 1s
+      retries: 5
+      start_period: 4s
 
   debezium-connector:
     build:
@@ -48,26 +54,14 @@ services:
       dockerfile: Dockerfile
     env_file: .env
     depends_on:
-      - debezium
-    container_name: debezium-connector-container
+      debezium:
+        condition: service_healthy
     environment:
       DEBEZIUM_SERVER: "http://debezium:8083/connectors/"
       KAFKA_SERVER: "kafka:29092"
       TOPIC_NAME: "rds_first_topic"
       # comma-separated list of tables to capture data from
       TABLE_LIST: "test_table"
-
-  # pyspark_consumer:
-  #   build:
-  #     context: ./src/pyspark_consumer
-  #     dockerfile: Dockerfile
-  #   container_name: pyspark_consumer
-  #   depends_on:
-  #     - kafka
-  #   environment:
-  #     KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
-  #     INPUT_TOPIC: "rds_first_topic"
-  #     OUTPUT_TOPIC: "output_topic_sink"
 
   jupyter:
     build:
@@ -86,6 +80,18 @@ services:
     - kafka
   #   # command: bash -c "pip install pyspark==3.5.1 confluent-kafka==2.3.0 && start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
   
+  # pyspark_consumer:
+  #   build:
+  #     context: ./src/pyspark_consumer
+  #     dockerfile: Dockerfile
+  #   container_name: pyspark_consumer
+  #   depends_on:
+  #     - kafka
+  #   environment:
+  #     KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+  #     INPUT_TOPIC: "rds_first_topic"
+  #     OUTPUT_TOPIC: "output_topic_sink"
+
   # schema-registry:
   #   image: confluentinc/cp-schema-registry:7.6.0
     # environment:
