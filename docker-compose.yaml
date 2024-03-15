@@ -43,7 +43,7 @@ services:
       - 8083:8083
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/"]
-      interval: 1s
+      interval: 2s
       timeout: 1s
       retries: 5
       start_period: 4s
