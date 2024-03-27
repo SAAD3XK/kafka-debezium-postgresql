@@ -72,6 +72,7 @@ services:
       - 8888:8888
     volumes:
       - ./notebooks:/app/notebooks
+      - ./nba_dataset:/app/notebooks/data/nba_dataset
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       INPUT_TOPIC: "rds_first_topic"
