@@ -24,6 +24,17 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     restart: always
 
+  db:
+      image: postgres:latest
+      environment:
+        POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+        POSTGRES_USER: ${DATABASE_USER}
+        POSTGRES_DB: ${DATABASE_NAME}
+      ports:
+        - "5444:5432"
+      # volumes:
+      #   - postgres_data:/var/lib/postgresql/data
+
   debezium:
     image: debezium/connect:2.5
     environment:
@@ -34,9 +45,6 @@ services:
       OFFSET_STORAGE_TOPIC: connect_offsets
       KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      # CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      # CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      # ENABLE_DEBEZIUM_SCRIPTING: 'true'
     depends_on:
       - kafka
     ports:
@@ -48,37 +56,37 @@ services:
       retries: 5
       start_period: 4s
 
-  debezium-connector:
-    build:
-      context: ./src/debezium_connector
-      dockerfile: Dockerfile
-    env_file: .env
-    depends_on:
-      debezium:
-        condition: service_healthy
-    environment:
-      DEBEZIUM_SERVER: "http://debezium:8083/connectors/"
-      KAFKA_SERVER: "kafka:29092"
-      TOPIC_NAME: "rds_first_topic"
-      # comma-separated list of tables to capture data from
-      TABLE_LIST: "test_table"
+  # debezium-connector:
+  #   build:
+  #     context: ./src/debezium_connector
+  #     dockerfile: Dockerfile
+  #   env_file: .env
+  #   depends_on:
+  #     debezium:
+  #       condition: service_healthy
+  #   environment:
+  #     DEBEZIUM_SERVER: "http://debezium:8083/connectors/"
+  #     KAFKA_SERVER: "kafka:29092"
+  #     TOPIC_NAME: "rds_first_topic"
+  #     # comma-separated list of tables to capture data from
+  #     TABLE_LIST: "test_table"
 
-  jupyter:
-    build:
-      context: ./src/jupyter_experiment
-      dockerfile: Dockerfile
-    container_name: experiment_notebook
-    ports:
-      - 8888:8888
-    volumes:
-      - ./notebooks:/app/notebooks
-      - ./nba_dataset:/app/notebooks/data/nba_dataset
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
-      INPUT_TOPIC: "rds_first_topic"
-      OUTPUT_TOPIC: "output_topic_sink"
-    depends_on:
-    - kafka
+  # jupyter:
+  #   build:
+  #     context: ./src/jupyter_experiment
+  #     dockerfile: Dockerfile
+  #   container_name: experiment_notebook
+  #   ports:
+  #     - 8888:8888
+  #   volumes:
+  #     - ./notebooks:/app/notebooks
+  #     - ./nba_dataset:/app/notebooks/data/nba_dataset
+  #   environment:
+  #     KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+  #     INPUT_TOPIC: "rds_first_topic"
+  #     OUTPUT_TOPIC: "output_topic_sink"
+  #   depends_on:
+  #   - kafka
   #   # command: bash -c "pip install pyspark==3.5.1 confluent-kafka==2.3.0 && start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''"
   
   # pyspark_consumer:
@@ -92,15 +100,3 @@ services:
   #     KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
   #     INPUT_TOPIC: "rds_first_topic"
   #     OUTPUT_TOPIC: "output_topic_sink"
-
-  # schema-registry:
-  #   image: confluentinc/cp-schema-registry:7.6.0
-    # environment:
-    #   - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=zookeeper:2181
-    #   - SCHEMA_REGISTRY_HOST_NAME=schema-registry
-    #   - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081,http://localhost:8081
-  #   ports:
-  #     - 8081:8081
-  #   depends_on:
-  #     - zookeeper
-  #     - kafka
