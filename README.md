@@ -70,4 +70,10 @@ Engine="postgres"
 MasterUsername= "municipal_user",
 DBParameterGroupName = "default.postgres15" -> "postgres15wal" <-- new
 AvailabilityZone = "ap-south-1bregion = "ap-south-1"
+"VpcSecurityGroups": [
+    {
+        "VpcSecurityGroupId": "sg-086ca293a4051c85f",
+        "Status": "active"
+    }
+]
 ```
